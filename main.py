@@ -1,35 +1,40 @@
-import torch
+from transformers import AutoProcessor, BarkModel
 import streamlit as st
-from ultralyticsplus import YOLO, render_result
-from PIL import Image
+import torch
 
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-NMS_CONF = 0.25
-IOU = 0.45
-NMS_AGNOSTIC = False
-MAX_DETECTIONS = 1000
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-# load model
 @st.cache_resource()
 def load_model():
-    model = YOLO('keremberke/yolov8s-table-extraction')
-    model.overrides['conf'] = NMS_CONF
-    model.overrides['iou'] = IOU
-    model.overrides['agnostic_nms'] = NMS_AGNOSTIC
-    model.overrides['max_det'] = MAX_DETECTIONS
-    model.to(DEVICE)
+    model = BarkModel.from_pretrained("suno/bark-small")
+    model = model.to(device)
     return model
 
-def find_tables(img):
-    model = load_model()
-    results = model.predict(img)
-    render = render_result(model=model, image=img, result=results[0])
-    return render
+@st.cache_resource()
+def load_processor():
+    processor = AutoProcessor.from_pretrained("suno/bark-small")
+    return processor
 
-st.title('Найти таблицы на картинке')
-image_buffer = st.file_uploader('Картинка с таблицей', type=['png', 'jpg'])
-result = st.button('Найти')
-if result and image_buffer:
-    image = Image.open(image_buffer).convert('RGB')
-    predictions = find_tables(image)
-    st.image(predictions)
+def preprocess_text(text):
+    processor = load_processor()
+    output = processor(text)
+    return output
+
+def generate_tts(text):
+    inputs = preprocess_text(text)
+    model = load_model()
+
+    with st.spinner('Генерируется аудио...'):
+        speech_output = model.generate(**inputs.to(device))
+
+        rate = model.generation_config.sample_rate
+        audio = speech_output[0].cpu().numpy()
+
+        return [audio, rate]
+    
+st.title('Text-to-Speech с аннотациями')
+text = st.text_area('Введите текст')
+result = st.button('Произнести')
+if result and text:
+    audio, rate = generate_tts(text)
+    st.audio(audio, sample_rate=rate)
