@@ -3,8 +3,8 @@ import streamlit as st
 
 @st.cache_resource
 def load_model():
+    print('sasdasdasdasd')
     model = BarkModel.from_pretrained("suno/bark-small")
-    print('uhh model loaded')
     return model
 
 @st.cache_resource
@@ -20,19 +20,14 @@ def preprocess_text(text):
 def generate_tts(text):
     inputs = preprocess_text(text)
     model = load_model()
-    print('about to generate sumth')
 
     with st.spinner('Генерируется аудио...'):
-        try:
-            speech_output = model.generate(**inputs)
+        speech_output = model.generate(**inputs)
 
-            rate = model.generation_config.sample_rate
-            audio = speech_output[0].cpu().numpy()
+        rate = model.generation_config.sample_rate
+        audio = speech_output[0].cpu().numpy()
 
-            return [audio, rate]
-        except Exception as e:
-            print(e)
-            raise e
+        return [audio, rate]
     
 st.title('Text-to-Speech с аннотациями')
 text = st.text_area('Введите текст')
