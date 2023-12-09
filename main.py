@@ -28,7 +28,7 @@ def generate_tts(text):
         with torch.no_grad():
             outputs = model(**inputs)
 
-        waveform = outputs.waveform[0]
+        waveform = outputs.waveform[0].cpu().numpy()
         return waveform, model.config.sampling_rate
 
 
