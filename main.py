@@ -4,13 +4,11 @@ import torch
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-@st.cache_resource()
 def load_model():
     model = BarkModel.from_pretrained("suno/bark-small")
     model = model.to(device)
     return model
 
-@st.cache_resource()
 def load_processor():
     processor = AutoProcessor.from_pretrained("suno/bark-small")
     return processor
