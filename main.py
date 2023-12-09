@@ -1,10 +1,10 @@
 from transformers import AutoProcessor, BarkModel
 import streamlit as st
-import torch
 
 @st.cache_resource
 def load_model():
     model = BarkModel.from_pretrained("suno/bark-small")
+    print('uhh model loaded')
     return model
 
 @st.cache_resource
@@ -20,14 +20,19 @@ def preprocess_text(text):
 def generate_tts(text):
     inputs = preprocess_text(text)
     model = load_model()
+    print('about to generate sumth')
 
     with st.spinner('Генерируется аудио...'):
-        speech_output = model.generate(**inputs)
+        try:
+            speech_output = model.generate(**inputs)
 
-        rate = model.generation_config.sample_rate
-        audio = speech_output[0].cpu().numpy()
+            rate = model.generation_config.sample_rate
+            audio = speech_output[0].cpu().numpy()
 
-        return [audio, rate]
+            return [audio, rate]
+        except Exception as e:
+            print(e)
+            raise e
     
 st.title('Text-to-Speech с аннотациями')
 text = st.text_area('Введите текст')
