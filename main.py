@@ -2,13 +2,12 @@ from transformers import AutoProcessor, BarkModel
 import streamlit as st
 import torch
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
+@st.cache_resource
 def load_model():
     model = BarkModel.from_pretrained("suno/bark-small")
-    model = model.to(device)
     return model
 
+@st.cache_resource
 def load_processor():
     processor = AutoProcessor.from_pretrained("suno/bark-small")
     return processor
@@ -23,7 +22,7 @@ def generate_tts(text):
     model = load_model()
 
     with st.spinner('Генерируется аудио...'):
-        speech_output = model.generate(**inputs.to(device))
+        speech_output = model.generate(**inputs)
 
         rate = model.generation_config.sample_rate
         audio = speech_output[0].cpu().numpy()
